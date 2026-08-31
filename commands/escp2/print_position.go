@@ -2,7 +2,6 @@ package escp2
 
 import (
 	"github.com/mjwhodur/imperfekt/commands/escp2/commandcodes"
-	"github.com/mjwhodur/imperfekt/commands/escp2/helpers"
 )
 
 // The resulting horiszontal position is determined by the formula below:
@@ -37,29 +36,6 @@ func TabHorizontally() []byte {
 
 func TabVertically() []byte {
 	return []byte{commandcodes.VT}
-}
-
-// Use when margin is known, set the absolute print position, counted without the margin (from the top of the sheet)
-func SetAbsoluteVerticalPrintPositionInMillimetersWithKnownMargin(fromTop uint32, topMargin uint32) []byte {
-	definedUnit := 10
-
-	verPos, _ := helpers.MilimeterToUnit(fromTop, uint32(definedUnit))
-	topMarginPos, _ := helpers.MilimeterToUnit(topMargin, uint32(definedUnit))
-
-	upper := byte((verPos - topMarginPos) / 256)
-	lower := byte((verPos - topMarginPos) % 256)
-	return SetAbsoluteVerticalPrintPosition(lower, upper)
-}
-
-func SetAbsoluteHorizontalPrintPositionInMillimetersWithKnownMargin(fromLeft uint32, leftMargin uint32) []byte {
-	definedUnit := 10
-
-	verPos, _ := helpers.MilimeterToUnit(fromLeft, uint32(definedUnit))
-	leftMarginPos, _ := helpers.MilimeterToUnit(leftMargin, uint32(definedUnit))
-
-	upper := byte((verPos - leftMarginPos) / 256)
-	lower := byte(((verPos - leftMarginPos) % 256))
-	return SetAbsoluteHorizontalPosition(lower, upper)
 }
 
 // CarriageReturn moves the print position to the left-margin position.

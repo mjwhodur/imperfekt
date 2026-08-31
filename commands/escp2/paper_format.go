@@ -1,44 +1,83 @@
 package escp2
 
-import "github.com/mjwhodur/imperfekt/commands/escp2/helpers"
+import "github.com/mjwhodur/imperfekt/commands/escp2/commandcodes"
 
-func SetPageSizeInMillimeters(length uint32, width uint32) []byte {
-	// 1 inch = 254 mm
+func SetPageLengthInDefinedUnit(length uint32, definedUnit ...uint8) []byte {
+	//unit := uint8(10)
+	//if len(definedUnit) > 0 {
+	//	unit = definedUnit[0]
+	//}
 
-	// Assuming default unit is set to 10 (1 unit = 1 / 360")
-	setDefaultUnit := SetDefaultUnit(10)
-	// Page Length in Inches = paper_in_mm / 254
+	valH := byte((length) / 256)
+	valL := byte((length) % 256)
 
-	// In units: 1 inch = 360 units
+	return []byte{commandcodes.ESC, 40, 67, 2, 0, valL, valH}
+}
 
-	// Epson_LTH_in_units = paper_length_in_inches * 360
+// SetPageFormat sets the top and bottom margins in the defined units
+func SetPageFormat(topLower byte, topHigher byte, bottomLower byte, bottomHigher byte) []byte {
 
-	EpsonLthInUnits, err := helpers.MilimeterToUnit(length, 10)
-	if err != nil {
-		panic(err)
+	return []byte{commandcodes.ESC, 40, 99, 4, 0, topLower, topHigher, bottomLower, bottomHigher}
+}
+
+func SetPageLengthInLines(amount byte) []byte {
+	return []byte{commandcodes.ESC, 67, amount}
+}
+
+func SetPageLengthInInches(length uint8) []byte {
+	if length >= 1 && length <= 22 {
+		return []byte{
+			commandcodes.ESC, 67, commandcodes.NUL, length,
+		}
 	}
-	pageLen := SetPageLengthInDefinedUnit(EpsonLthInUnits)
-	//pageWidth := SetRightMarginMillimeters(width)
-	return append(append(setDefaultUnit, pageLen...))
-
+	panic("Page length must be between 1 and 22 inches")
 }
 
-func SetPageMarginsInMilimeters(top uint32, bottom uint32, left uint32, right uint32) []byte {
-	return nil
+func SetTopMargin(nominator uint8) []byte {
+	panic("SetTopMargin not implemented")
+	return []byte{
+		commandcodes.ESC, 67, commandcodes.NUL, nominator,
+	}
 }
 
-func SetTopBottomMarginsInMilimeters(top uint32, bottom uint32) []byte {
-	definedUnit := 10
-	topMargin, _ := helpers.MilimeterToUnit(top, uint32(definedUnit))
-	bottomMargin, _ := helpers.MilimeterToUnit(bottom, uint32(definedUnit))
-
-	return SetPageFormat(topMargin, bottomMargin, byte(definedUnit))
+// SetBottomMargin sets the bottom margin on continuous paper to n lines in the current-set line spacing from the
+// top of form position on the next page
+func SetBottomMargin(nominator uint8) []byte {
+	return []byte{
+		commandcodes.ESC, 67, 'N', nominator,
+	}
 }
 
-func SetPageFormatA4() []byte {
-	return SetPageSizeInMillimeters(297, 210)
+func CancelBottomMargin() []byte { return []byte{commandcodes.ESC, 79} }
+
+// FIXME: Test
+func SetLeftMarginInCols15CPI(marginInCols uint32) []byte {
+	return []byte{commandcodes.ESC, 103, commandcodes.ESC, 'I', byte(marginInCols)}
 }
 
-func SetPageFormatC6() []byte {
-	return SetPageSizeInMillimeters(162, 114)
+// FIXME: Test
+func SetRightMarginInCols15CPI(marginInCols uint32) []byte {
+	return []byte{commandcodes.ESC, 103, commandcodes.ESC, 'Q', byte(marginInCols)}
+}
+
+// FIXME: Test
+func SetLeftMarginInCols(marginInCols uint32) []byte {
+	return []byte{commandcodes.ESC, 'I', byte(marginInCols)}
+}
+
+// FIXME: Test
+func SetRightMarginInCols(marginInCols uint32) []byte {
+	return []byte{commandcodes.ESC, 'Q', byte(marginInCols)}
+}
+
+func SetHorizontalTabs(tabs []byte) []byte {
+	return append(append([]byte{commandcodes.ESC, 68}, tabs...), 0)
+}
+
+func SetVerticalTabs(tabs []byte) []byte {
+	return append(append([]byte{commandcodes.ESC, 66}, tabs...), 0)
+}
+
+func SetN360thsinchLineSpacing(amount byte) []byte {
+	return []byte{commandcodes.ESC, 43, amount}
 }
